@@ -1,4 +1,18 @@
 import random
+import math
+
+def display_2D(lst, height, width,):
+    if height * width != len(lst):
+        print("Error: Height times width must be equal to the length of the list.")
+        return
+    
+    for i in range(height):
+        for j in range(width):
+            # if len(str(lst[i * width + j])) ==1:
+            #     print("0"+str(lst[i * width + j]), end=" ")
+            # else:
+                print(lst[i * width + j], end=" ")
+        print()
 
 
 def getfactors(f):
@@ -26,13 +40,38 @@ def check_overlap(room_size, room_positions, new_size, new_position, overlap_ran
             return idx  # Return the index of the overlapping room
     return -1
 
+def are_rooms_overlapping(pos1, size1, pos2, size2, overlap_range):
+    # Extract position components
+    x1, y1 = pos1
+    x2, y2 = pos2
+    
+     # Calculate boundaries of each room
+    room1_left = x1 - overlap_range
+    room1_right = x1 + size1 + overlap_range
+    room1_top = y1 - overlap_range
+    room1_bottom = y1 + size1 + overlap_range
+    
+    room2_left = x2
+    room2_right = x2 + size2
+    room2_top = y2
+    room2_bottom = y2 + size2
+    
+    # Check for overlap
+    if (room1_left < room2_right and
+        room1_right > room2_left and
+        room1_top < room2_bottom and
+        room1_bottom > room2_top):
+        return True
+    else:
+        return False
+
 def setpos(room, rooms, list_pos, minvalue,maxvalue,factor,roomsize,overlap_range,overlap_factor):
     
     fx,fy=getfactors(factor)
-    print(fx)
+    #print(fx)
     
     original_posx = list_pos[0][0]
-    original_posy= list_pos[0][1]
+    original_posy = list_pos[0][1]
 
     if fx==-1 :
         maxx = original_posx-minvalue
@@ -56,7 +95,6 @@ def setpos(room, rooms, list_pos, minvalue,maxvalue,factor,roomsize,overlap_rang
         x,y = random.randrange(minx,maxx),0
     else :
         x,y =random.randrange(minx,maxx),random.randrange(miny,maxy)
-    
  
     while check_overlap(rooms,list_pos,room,(x,y),overlap_range)!=-1:
         while are_rooms_overlapping(list_pos[check_overlap(rooms,list_pos,room,(x,y),overlap_range)],rooms[check_overlap(rooms,list_pos,room,(x,y),overlap_range)], (x,y), room,overlap_range):
@@ -101,68 +139,27 @@ def generatepos(roomlist,overlap_range,min_space,max_space,factor,overlap_factor
         list_pos.append((x,y))
     return list_pos
 
-def get_room_positions(room_pos, room_size):
-    room_positions = []
-    minx, miny = room_pos
-    maxx = minx + room_size
-    maxy = miny + room_size
-    
-    for x in range(minx, maxx):
-        for y in range(miny, maxy):
-            room_positions.append((x, y))
-    
-    return room_positions
-
-def are_rooms_overlapping(pos1, size1, pos2, size2, overlap_range):
-    # Extract position components
-    x1, y1 = pos1
-    x2, y2 = pos2
-    
-     # Calculate boundaries of each room
-    room1_left = x1 - overlap_range
-    room1_right = x1 + size1 + overlap_range
-    room1_top = y1 - overlap_range
-    room1_bottom = y1 + size1 + overlap_range
-    
-    room2_left = x2
-    room2_right = x2 + size2
-    room2_top = y2
-    room2_bottom = y2 + size2
-    
-    # Check for overlap
-    if (room1_left < room2_right and
-        room1_right > room2_left and
-        room1_top < room2_bottom and
-        room1_bottom > room2_top):
-        return True
-    else:
-        return False
-
-
-def display_2D(lst, height, width,):
-    if height * width != len(lst):
-        print("Error: Height times width must be equal to the length of the list.")
-        return
-    
-    for i in range(height):
-        for j in range(width):
-            print(lst[i * width + j], end=" ")
-        print()
-
 def set_entrance(room_size):
-    tmpX=random.randrange(0,2)
-    tmpY=random.randrange(0,2)
-    if tmpX==0:
+    tmp=random.randrange(0,4)
+    if tmp==0:
         x=random.randrange(0,room_size)
-    else:
+        y=0
+    elif tmp==1:
         x=0
-
-    if tmpY==0:
+        y=random.randrange(0,room_size)
+    elif tmp==2 :
+        x=room_size-1
         y=random.randrange(0,room_size)
     else:
-        y=0
+        y=room_size-1
+        x=random.randrange(0,room_size)
 
     return x,y
+
+def generate_paths(grid, rooms, list_pos, entrances_positions, min_x, min_y, grid_width, grid_height):
+    
+    return grid
+        
 
 def generate_grid(rooms,overlap_range, min_space,max_space,factor, overlap_factor, border_range):
 
@@ -179,10 +176,10 @@ def generate_grid(rooms,overlap_range, min_space,max_space,factor, overlap_facto
     print("Right columns :"+str(right_columns))
 
     print(list_pos)
+    #Updating columns and rows to the list of positions
     list_pos = [(x + left_columns, y + top_rows) for x, y in list_pos]
 
-    
-
+    #Calculating the farthest rooms north south east west
     max_x = max(x + room_size for (x, _), room_size in zip(list_pos, rooms))
     max_y = max(y + room_size for (_, y), room_size in zip(list_pos, rooms))
     min_x = min(x for x, _ in list_pos)
@@ -191,23 +188,47 @@ def generate_grid(rooms,overlap_range, min_space,max_space,factor, overlap_facto
     print(rooms)
     print(list_pos)
 
+    #Generating the grid according to the rooms positions
     grid_width = (max_x - min_x) + left_columns + right_columns
     grid_height = (max_y - min_y) + top_rows + bottom_rows
     
     grid = ["."] * (grid_width * grid_height)
 
+    entrances_postitions = []
+    entrances_postitions_1D = []
+    rooms_pos = []
+
+    print("Min_x :"+str(min_x))
+    print("Min_y :"+str(min_y))
+    
     for i, (x, y) in enumerate(list_pos):
         room_index = i
         room_size = rooms[room_index]
         entranceX, entranceY = set_entrance(room_size)
+        entrances_postitions.append((entranceX,entranceY))
         for j in range(y, y + room_size):
             for k in range(x, x + room_size):
-                if j==y+entranceY and k==x+entranceX:
-                    grid[(j - min_y) * grid_width + (k - min_x)] = "E" #str(room_index)
+                rooms_pos.append((j - min_y) * grid_width + (k - min_x))
+                
+                if room_index==0:
+                    print(str((j - min_y))+";"+str((k-min_x)))
+                    grid[(j - min_y) * grid_width + (k - min_x)] = "0"
+                elif j==y+entranceY and k==x+entranceX:
+                    entrances_postitions_1D.append((j - min_y) * grid_width + (k - min_x))
+                    grid[(j - min_y) * grid_width + (k - min_x)] = str(room_index) #"E"
                 else:    
                     grid[(j - min_y) * grid_width + (k - min_x)] = "X" #str(room_index)
 
+
     display_2D(grid, grid_height, grid_width)
+    value_grid = generate_paths(grid, rooms, list_pos, entrances_postitions, min_x,min_y, grid_width, grid_height)# generate_value_grid(grid_height,grid_width, list_pos, rooms_pos,min_x,min_y)
+    display_2D(grid, grid_height, grid_width)
+    # tmp = [i for i in grid]
+    # grid = generate_paths(grid, rooms, list_pos, entrances_postitions, min_x,min_y, grid_width)
+    # display_2D(grid, grid_height, grid_width)
+    # print("--")
+    # tmp = generate_paths(tmp, rooms, list_pos, entrances_postitions, min_x,min_y, grid_width)
+    display_2D(value_grid, grid_height, grid_width)
 
     print(grid_width)
     print(grid_height)
